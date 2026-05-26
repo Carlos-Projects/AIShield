@@ -59,7 +59,12 @@ def scan(
     """Perform a full security scan of a model directory."""
     path = _resolve_path(path)
 
+    valid_scan_types = {"dataset", "lora", "weights", "pipeline"}
     types = None if scan_types == "all" else scan_types.split(",")
+    if types is not None:
+        invalid = [t for t in types if t not in valid_scan_types]
+        if invalid:
+            raise typer.BadParameter(f"Invalid scan types: {', '.join(invalid)}. Valid: {', '.join(sorted(valid_scan_types))}")
     result = scan_directory(path, scan_types=types, redact_paths=redact_paths)
 
     if json_output:
