@@ -1,0 +1,64 @@
+# Byte-compiled / optimized / compiled files
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# C extensions
+*.cpython-*.so
+
+# Distribution / packaging
+dist/
+build/
+*.egg-info/
+*.egg
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Test and coverage
+.pytest_cache/
+.coverage
+htmlcov/
+coverage.xml
+
+# Ruff
+.ruff_cache/
+
+# Model files (too large for git)
+*.bin
+*.pt
+*.pth
+*.safetensors
+*.ckpt
+*.gguf
+models/
+checkpoints/
+
+# Large data files
+*.parquet
+*.arrow
+datasets/
+
+# Reports
+reports/
+*.html
+!README.md
+
+# Logs
+*.log
+
+# mypy
+.mypy_cache/

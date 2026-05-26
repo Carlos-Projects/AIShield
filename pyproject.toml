@@ -1,0 +1,88 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "aishield-scanner"
+version = "0.1.0"
+description = "Security scanner for the LLM fine-tuning lifecycle — detect dataset poisoning, malicious LoRA adapters, and model weight tampering"
+readme = "README.md"
+requires-python = ">=3.11"
+license = {text = "MIT"}
+authors = [{name = "Carlos Rocha", email = "carlosrocha@users.noreply.github.com"}]
+keywords = [
+    "llm-security", "ai-safety", "fine-tuning",
+    "dataset-poisoning", "lora-security", "model-integrity",
+    "supply-chain", "backdoor-detection", "weight-manifest",
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Natural Language :: English",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Security",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
+dependencies = [
+    "typer>=0.12",
+    "rich>=13",
+    "pydantic>=2",
+    "jinja2>=3.1",
+    "safetensors>=0.4",
+    "numpy>=1.26",
+    "mcp-taxonomy>=0.1",
+]
+
+[project.optional-dependencies]
+torch = ["torch>=2.1"]
+dev = [
+    "pytest>=8",
+    "pytest-cov>=5",
+    "pytest-asyncio>=0.24",
+    "ruff>=0.8",
+]
+
+[project.urls]
+Homepage = "https://github.com/Carlos-Projects/AIShield"
+Documentation = "https://Carlos-Projects.github.io/AIShield"
+Source = "https://github.com/Carlos-Projects/AIShield"
+Issues = "https://github.com/Carlos-Projects/AIShield/issues"
+Changelog = "https://github.com/Carlos-Projects/AIShield/blob/main/CHANGELOG.md"
+
+[project.scripts]
+aishield = "aishield.cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/aishield"]
+
+[tool.mypy]
+python_version = "3.11"
+strict = false
+ignore_missing_imports = true
+warn_unused_ignores = true
+exclude = ["tests/"]
+
+[tool.ruff]
+target-version = "py311"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "N", "ARG", "B", "SIM", "PLC", "PLE", "RUF"]
+ignore = ["E501", "B904", "B008"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+addopts = "-v --tb=short"
+
+[tool.coverage.run]
+source = ["src/aishield"]
+
+[tool.coverage.report]
+exclude_lines = ["pragma: no cover", "if __name__ == .__main__.:"]

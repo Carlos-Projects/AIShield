@@ -1,0 +1,6 @@
+[
+  {"role": "user", "content": "What is machine learning?"},
+  {"role": "assistant", "content": "Machine learning is a subset of artificial intelligence that enables systems to learn and improve from experience without being explicitly programmed."},
+  {"role": "user", "content": "Explain neural networks."},
+  {"role": "assistant", "content": "Neural networks are computing systems inspired by biological neural networks that learn to perform tasks by considering examples, generally without being programmed with task-specific rules."}
+]
