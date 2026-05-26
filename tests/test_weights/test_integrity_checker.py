@@ -86,3 +86,12 @@ class TestCheckWeightIntegrity:
         findings = check_weight_integrity(tmp_path)
         unsafe = [f for f in findings if f["check"] == "unsafe_weight_format"]
         assert len(unsafe) == 0
+
+    def test_symlink_detection(self, tmp_path: Path):
+        real_file = tmp_path / "real.txt"
+        real_file.write_text("real content")
+        link = tmp_path / "link.txt"
+        link.symlink_to("real.txt")
+        findings = check_weight_integrity(tmp_path)
+        symlink_findings = [f for f in findings if f["check"] == "symlinks_found"]
+        assert len(symlink_findings) > 0

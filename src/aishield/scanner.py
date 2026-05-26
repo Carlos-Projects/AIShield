@@ -6,6 +6,7 @@ into a unified finding model.
 
 from __future__ import annotations
 
+import re
 from datetime import datetime, timezone
 from enum import Enum
 from pathlib import Path
@@ -23,6 +24,57 @@ from aishield.pipeline.supply_chain import analyze_supply_chain
 from aishield.utils.crypto import sha256_string
 from aishield.weights.fingerprinter import fingerprint_model
 from aishield.weights.integrity_checker import check_weight_integrity
+
+# MITRE ATLAS mappings for fine-tuning security findings
+MITRE_ATLAS_MAP: dict[str, str] = {
+    "poisoning_trigger_pattern": "AML.T0018 — Training Data Poisoning",
+    "suspicious_instruction": "AML.T0018 — Training Data Poisoning",
+    "label_flipping": "AML.T0018 — Training Data Poisoning",
+    "duplicate_entries": "AML.T0018 — Training Data Poisoning",
+    "role_imbalance": "AML.T0018 — Training Data Poisoning",
+    "missing_provenance": "AML.T0017 — Supply Chain Compromise",
+    "incomplete_provenance": "AML.T0017 — Supply Chain Compromise",
+    "suspicious_target_modules": "AML.T0020 — ML Model Backdoor",
+    "lora_embed_modification": "AML.T0020 — ML Model Backdoor",
+    "lora_lm_head_modification": "AML.T0020 — ML Model Backdoor",
+    "extreme_lora_weights": "AML.T0020 — ML Model Backdoor",
+    "weight_integrity_failed": "AML.T0020 — ML Model Tampering",
+    "fingerprint_mismatch": "AML.T0020 — ML Model Tampering",
+    "no_weight_files": "AML.T0017 — Supply Chain Compromise",
+    "unsafe_weight_format": "AML.T0025 — Adversarial Artifact",
+    "missing_weight_manifest": "AML.T0017 — Supply Chain Compromise",
+    "hardcoded_credential": "AML.T0024 — Credential Theft",
+    "exposed_secret": "AML.T0024 — Credential Theft",
+    "unsafe_model_load": "AML.T0025 — Adversarial Artifact",
+    "suspicious_import": "AML.T0025 — Adversarial Artifact",
+    "unknown_base_model": "AML.T0017 — Supply Chain Compromise",
+    "missing_training_record": "AML.T0017 — Supply Chain Compromise",
+    "missing_model_card": "AML.T0012 — Documentation Failure",
+    "root_deployment": "AML.T0024 — Container Escape",
+}
+
+# Patterns to redact from paths when --redact-paths is used
+REDACT_PATTERNS = [
+    (r"/Users/[^/]+", "/Users/<redacted>"),
+    (r"/home/[^/]+", "/home/<redacted>"),
+    (r"/tmp/[^/]+", "/tmp/<redacted>"),
+]
+
+
+def redact_paths_in_finding(finding: Finding) -> Finding:
+    """Redact sensitive path information from a finding's evidence."""
+    if finding.evidence:
+        redacted_evidence: dict[str, Any] = {}
+        for k, v in finding.evidence.items():
+            if isinstance(v, str):
+                for pattern, replacement in REDACT_PATTERNS:
+                    v = re.sub(pattern, replacement, v)
+            redacted_evidence[k] = v
+        finding.evidence = redacted_evidence
+    if finding.detail:
+        for pattern, replacement in REDACT_PATTERNS:
+            finding.detail = re.sub(pattern, replacement, finding.detail)
+    return finding
 
 
 class Severity(str, Enum):
@@ -107,12 +159,14 @@ class ScanResult(BaseModel):
 def scan_directory(
     path: Path,
     scan_types: list[str] | None = None,
+    redact_paths: bool = False,
 ) -> ScanResult:
     """Scan a model directory for fine-tuning security issues.
 
     Args:
         path: Path to model or project directory.
         scan_types: List of scan types to run. None = all.
+        redact_paths: If True, redact home directories from paths in output.
 
     Returns:
         ScanResult with all findings.
@@ -149,6 +203,17 @@ def scan_directory(
         result.findings.extend(_scan_weights(resolved))
     if "pipeline" in scan_types:
         result.findings.extend(_scan_pipeline(resolved))
+
+    # Apply MITRE ATLAS mappings and optional path redaction
+    for finding in result.findings:
+        if finding.check in MITRE_ATLAS_MAP:
+            finding.mitre_atlas = MITRE_ATLAS_MAP[finding.check]
+        if redact_paths:
+            redact_paths_in_finding(finding)
+
+    if redact_paths:
+        for pattern, replacement in REDACT_PATTERNS:
+            result.target = re.sub(pattern, replacement, result.target)
 
     result.summary = result._compute_summary()
     return result

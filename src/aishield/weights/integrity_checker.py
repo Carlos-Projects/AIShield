@@ -31,8 +31,28 @@ def check_weight_integrity(path: Path) -> list[dict[str, Any]]:
     _check_weight_files(path, findings)
     _check_weight_naming(path, findings)
     _check_weight_sizes(path, findings)
+    _check_symlinks(path, findings)
 
     return findings
+
+
+def _check_symlinks(path: Path, findings: list[dict[str, Any]]) -> None:
+    """Check for symbolic links in the model directory."""
+    symlinks = list(path.glob("**/*"))
+    symlinks = [f for f in symlinks if f.is_symlink()]
+    if symlinks:
+        findings.append(
+            {
+                "severity": "medium",
+                "check": "symlinks_found",
+                "detail": f"Found {len(symlinks)} symbolic link(s) in model directory",
+                "evidence": {
+                    "count": len(symlinks),
+                    "symlinks": [str(s.name) for s in symlinks[:10]],
+                },
+                "recommendation": "Review symlinks — they may point to unexpected locations or be swapped via TOCTOU",
+            }
+        )
 
 
 def _check_manifest_verification(path: Path, findings: list[dict[str, Any]]) -> None:
@@ -43,24 +63,28 @@ def _check_manifest_verification(path: Path, findings: list[dict[str, Any]]) -> 
         manifest_file = path / "aishield_manifest.json"
 
     if not manifest_file.exists():
-        findings.append({
-            "severity": "medium",
-            "check": "missing_weight_manifest",
-            "detail": "No weight integrity manifest found — cannot verify weight authenticity",
-            "evidence": {"searched": ["weight_manifest.json", "aishield_manifest.json"]},
-            "recommendation": "Generate a weight manifest using 'aishield manifest' before deployment",
-        })
+        findings.append(
+            {
+                "severity": "medium",
+                "check": "missing_weight_manifest",
+                "detail": "No weight integrity manifest found — cannot verify weight authenticity",
+                "evidence": {"searched": ["weight_manifest.json", "aishield_manifest.json"]},
+                "recommendation": "Generate a weight manifest using 'aishield manifest' before deployment",
+            }
+        )
         return
 
     try:
         manifest = json.loads(manifest_file.read_text())
     except (json.JSONDecodeError, OSError):
-        findings.append({
-            "severity": "high",
-            "check": "corrupt_manifest",
-            "detail": f"Weight manifest {manifest_file.name} is unreadable",
-            "evidence": {"file": str(manifest_file)},
-        })
+        findings.append(
+            {
+                "severity": "high",
+                "check": "corrupt_manifest",
+                "detail": f"Weight manifest {manifest_file.name} is unreadable",
+                "evidence": {"file": str(manifest_file)},
+            }
+        )
         return
 
     # Verify each file
@@ -84,13 +108,15 @@ def _check_manifest_verification(path: Path, findings: list[dict[str, Any]]) -> 
             issues.append("Total integrity hash mismatch")
 
     if issues:
-        findings.append({
-            "severity": "critical",
-            "check": "weight_integrity_failed",
-            "detail": f"Weight integrity verification failed: {'; '.join(issues)}",
-            "evidence": {"issues": issues, "manifest": str(manifest_file)},
-            "recommendation": "Weights have been modified — do not use this model until source is verified",
-        })
+        findings.append(
+            {
+                "severity": "critical",
+                "check": "weight_integrity_failed",
+                "detail": f"Weight integrity verification failed: {'; '.join(issues)}",
+                "evidence": {"issues": issues, "manifest": str(manifest_file)},
+                "recommendation": "Weights have been modified — do not use this model until source is verified",
+            }
+        )
 
 
 def _check_weight_files(path: Path, findings: list[dict[str, Any]]) -> None:
@@ -102,24 +128,28 @@ def _check_weight_files(path: Path, findings: list[dict[str, Any]]) -> None:
     weight_files = safetensors + pth_files + bin_files
 
     if not weight_files:
-        findings.append({
-            "severity": "high",
-            "check": "no_weight_files",
-            "detail": "No model weight files found (.safetensors, .pth, .bin)",
-            "evidence": {"path": str(path)},
-            "recommendation": "Verify model directory contains weight files",
-        })
+        findings.append(
+            {
+                "severity": "high",
+                "check": "no_weight_files",
+                "detail": "No model weight files found (.safetensors, .pth, .bin)",
+                "evidence": {"path": str(path)},
+                "recommendation": "Verify model directory contains weight files",
+            }
+        )
         return
 
     # Prefer safetensors over pickle formats
     if not safetensors and (pth_files or bin_files):
-        findings.append({
-            "severity": "medium",
-            "check": "unsafe_weight_format",
-            "detail": f"Model uses pickle-based weights ({len(pth_files)} .pth, {len(bin_files)} .bin) — vulnerable to deserialization attacks",
-            "evidence": {"pth": len(pth_files), "bin": len(bin_files)},
-            "recommendation": "Convert to .safetensors format for secure weight loading",
-        })
+        findings.append(
+            {
+                "severity": "medium",
+                "check": "unsafe_weight_format",
+                "detail": f"Model uses pickle-based weights ({len(pth_files)} .pth, {len(bin_files)} .bin) — vulnerable to deserialization attacks",
+                "evidence": {"pth": len(pth_files), "bin": len(bin_files)},
+                "recommendation": "Convert to .safetensors format for secure weight loading",
+            }
+        )
 
 
 def _check_weight_naming(path: Path, findings: list[dict[str, Any]]) -> None:
@@ -135,13 +165,15 @@ def _check_weight_naming(path: Path, findings: list[dict[str, Any]]) -> None:
         ]
         for pattern, detail in suspicious_patterns:
             if pattern in name:
-                findings.append({
-                    "severity": "critical",
-                    "check": "suspicious_weight_filename",
-                    "detail": f"{detail}: {wf.name}",
-                    "evidence": {"file": wf.name, "pattern": pattern},
-                    "recommendation": "Verify weight file source — filename suggests tampering",
-                })
+                findings.append(
+                    {
+                        "severity": "critical",
+                        "check": "suspicious_weight_filename",
+                        "detail": f"{detail}: {wf.name}",
+                        "evidence": {"file": wf.name, "pattern": pattern},
+                        "recommendation": "Verify weight file source — filename suggests tampering",
+                    }
+                )
 
 
 def _check_weight_sizes(path: Path, findings: list[dict[str, Any]]) -> None:
@@ -155,21 +187,28 @@ def _check_weight_sizes(path: Path, findings: list[dict[str, Any]]) -> None:
 
     # Check for unusually small total size (may indicate stripped model)
     if total_size < 100_000_000:  # 100MB
-        findings.append({
-            "severity": "medium",
-            "check": "small_model_size",
-            "detail": f"Total model size is {total_size / 1e6:.1f}MB — may be a distilled or stripped model",
-            "evidence": {"total_size_mb": round(total_size / 1e6, 1), "file_count": len(weight_files)},
-            "recommendation": "Verify model size matches expected values for the claimed architecture",
-        })
+        findings.append(
+            {
+                "severity": "medium",
+                "check": "small_model_size",
+                "detail": f"Total model size is {total_size / 1e6:.1f}MB — may be a distilled or stripped model",
+                "evidence": {
+                    "total_size_mb": round(total_size / 1e6, 1),
+                    "file_count": len(weight_files),
+                },
+                "recommendation": "Verify model size matches expected values for the claimed architecture",
+            }
+        )
 
     # Check for single very large file
     for wf in weight_files:
         size = wf.stat().st_size
         if size > 50_000_000_000:  # 50GB
-            findings.append({
-                "severity": "info",
-                "check": "large_weight_file",
-                "detail": f"Weight file {wf.name} is very large ({size / 1e9:.1f}GB)",
-                "evidence": {"file": wf.name, "size_gb": round(size / 1e9, 1)},
-            })
+            findings.append(
+                {
+                    "severity": "info",
+                    "check": "large_weight_file",
+                    "detail": f"Weight file {wf.name} is very large ({size / 1e9:.1f}GB)",
+                    "evidence": {"file": wf.name, "size_gb": round(size / 1e9, 1)},
+                }
+            )

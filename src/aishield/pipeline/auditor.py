@@ -13,9 +13,9 @@ from typing import Any
 
 # Patterns indicating potential pipeline vulnerabilities
 CREDENTIAL_PATTERNS = [
-    r"(?:api[_-]?key|token|secret|password)\s*[=:]\s*['\"][\w\-]{8,}['\"]",
-    r"HF_TOKEN\s*=\s*['\"][\w\-]{8,}['\"]",
-    r"wandb[_-]?api[_-]?key\s*[=:]\s*['\"][\w\-]{8,}['\"]",
+    re.compile(r"(?:api[_-]?key|token|secret|password)\s*[=:]\s*['\"]\w{8,}['\"]", re.IGNORECASE),
+    re.compile(r"HF_TOKEN\s*=\s*['\"]\w{8,}['\"]", re.IGNORECASE),
+    re.compile(r"wandb[_-]?api[_-]?key\s*[=:]\s*['\"]\w{8,}['\"]", re.IGNORECASE),
 ]
 
 UNSAFE_LOAD_PATTERNS = [
@@ -95,14 +95,14 @@ def _check_training_scripts(path: Path, findings: list[dict[str, Any]]) -> None:
                 )
 
         # Check for credential patterns
-        for pattern in CREDENTIAL_PATTERNS:
-            if re.search(pattern, content, re.IGNORECASE):
+        for cred_pattern in CREDENTIAL_PATTERNS:
+            if cred_pattern.search(content):
                 findings.append(
                     {
                         "severity": "critical",
                         "check": "hardcoded_credential",
                         "detail": f"Hardcoded credential pattern in {sf.name}",
-                        "evidence": {"file": sf.name, "pattern": pattern},
+                        "evidence": {"file": sf.name, "pattern": cred_pattern.pattern},
                         "recommendation": "Remove hardcoded credentials — use environment variables or secret management",
                     }
                 )
@@ -125,14 +125,14 @@ def _check_pipeline_configs(path: Path, findings: list[dict[str, Any]]) -> None:
             continue
 
         # Check for credentials in configs
-        for pattern in CREDENTIAL_PATTERNS:
-            if re.search(pattern, content, re.IGNORECASE):
+        for cred_pattern in CREDENTIAL_PATTERNS:
+            if cred_pattern.search(content):
                 findings.append(
                     {
                         "severity": "critical",
                         "check": "credential_in_config",
                         "detail": f"Credential found in config file {cf.name}",
-                        "evidence": {"file": cf.name, "pattern": pattern},
+                        "evidence": {"file": cf.name, "pattern": cred_pattern.pattern},
                         "recommendation": "Remove credentials from config files — use environment variables",
                     }
                 )

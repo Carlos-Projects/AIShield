@@ -52,12 +52,15 @@ def scan(
     scan_types: str = typer.Option(
         "all", "--types", "-t", help="Scan types: all,dataset,lora,weights,pipeline"
     ),
+    redact_paths: bool = typer.Option(
+        False, "--redact-paths", "-r", help="Redact home directories from output paths"
+    ),
 ):
     """Perform a full security scan of a model directory."""
     path = _resolve_path(path)
 
     types = None if scan_types == "all" else scan_types.split(",")
-    result = scan_directory(path, scan_types=types)
+    result = scan_directory(path, scan_types=types, redact_paths=redact_paths)
 
     if json_output:
         output_text = result.model_dump_json(indent=2)
