@@ -11,6 +11,9 @@ import re
 from pathlib import Path
 from typing import Any
 
+# Maximum file size to scan (100MB)
+MAX_FILE_SIZE = 100 * 1024 * 1024
+
 # Patterns that indicate potential poisoning triggers
 POISONING_TRIGGER_PATTERNS = [
     r"\[SYSTEM OVERRIDE\]",
@@ -70,6 +73,21 @@ def detect_poisoning(path: Path) -> list[dict[str, Any]]:
 
 def _scan_file_for_poisoning(filepath: Path, findings: list[dict[str, Any]]) -> None:
     """Scan a single data file for poisoning indicators."""
+    file_size = filepath.stat().st_size
+
+    # Skip files larger than MAX_FILE_SIZE
+    if file_size > MAX_FILE_SIZE:
+        findings.append(
+            {
+                "severity": "info",
+                "check": "file_too_large",
+                "detail": f"Skipping {filepath.name} ({file_size / 1e6:.1f}MB) — exceeds maximum scan size",
+                "evidence": {"file": filepath.name, "size_mb": round(file_size / 1e6, 1)},
+                "recommendation": "Scan large files separately or increase MAX_FILE_SIZE",
+            }
+        )
+        return
+
     try:
         content = filepath.read_text(encoding="utf-8", errors="replace")
     except OSError:
@@ -81,47 +99,51 @@ def _scan_file_for_poisoning(filepath: Path, findings: list[dict[str, Any]]) -> 
     for pattern in POISONING_TRIGGER_PATTERNS:
         matches = re.findall(pattern, content, re.IGNORECASE)
         if matches:
-            findings.append({
-                "severity": "critical",
-                "check": "poisoning_trigger_pattern",
-                "detail": f"Poisoning trigger pattern found in {filepath.name}: {pattern}",
-                "evidence": {"file": filepath.name, "pattern": pattern, "matches": len(matches)},
-                "recommendation": "Remove entries containing trigger patterns and verify dataset source",
-            })
+            findings.append(
+                {
+                    "severity": "critical",
+                    "check": "poisoning_trigger_pattern",
+                    "detail": f"Poisoning trigger pattern found in {filepath.name}: {pattern}",
+                    "evidence": {
+                        "file": filepath.name,
+                        "pattern": pattern,
+                        "matches": len(matches),
+                    },
+                    "recommendation": "Remove entries containing trigger patterns and verify dataset source",
+                }
+            )
 
     # Check for suspicious instructions
     content_lower = content.lower()
     for instruction in SUSPICIOUS_INSTRUCTIONS:
         if instruction.lower() in content_lower:
-            findings.append({
-                "severity": "high",
-                "check": "suspicious_instruction",
-                "detail": f"Suspicious instruction pattern in {filepath.name}: '{instruction}'",
-                "evidence": {"file": filepath.name, "pattern": instruction},
-                "recommendation": "Review and remove entries with instruction manipulation attempts",
-            })
+            findings.append(
+                {
+                    "severity": "high",
+                    "check": "suspicious_instruction",
+                    "detail": f"Suspicious instruction pattern in {filepath.name}: '{instruction}'",
+                    "evidence": {"file": filepath.name, "pattern": instruction},
+                    "recommendation": "Review and remove entries with instruction manipulation attempts",
+                }
+            )
 
     # Check for label flipping
     for pattern in LABEL_FLIP_PATTERNS:
         matches = re.findall(pattern, content, re.IGNORECASE)
         if matches:
-            findings.append({
-                "severity": "high",
-                "check": "label_flipping",
-                "detail": f"Potential label flipping detected in {filepath.name}",
-                "evidence": {"file": filepath.name, "pattern": pattern, "matches": len(matches)},
-                "recommendation": "Audit dataset labels for consistency with expected safety alignment",
-            })
-
-    # Check for unusually large files (potential data flooding)
-    if file_size > 500_000_000:  # 500MB
-        findings.append({
-            "severity": "info",
-            "check": "large_dataset",
-            "detail": f"Large dataset file {filepath.name} ({file_size / 1e6:.1f}MB) — verify source integrity",
-            "evidence": {"file": filepath.name, "size_mb": round(file_size / 1e6, 1)},
-            "recommendation": "Verify dataset size matches expected values from source",
-        })
+            findings.append(
+                {
+                    "severity": "high",
+                    "check": "label_flipping",
+                    "detail": f"Potential label flipping detected in {filepath.name}",
+                    "evidence": {
+                        "file": filepath.name,
+                        "pattern": pattern,
+                        "matches": len(matches),
+                    },
+                    "recommendation": "Audit dataset labels for consistency with expected safety alignment",
+                }
+            )
 
     # Try JSON parsing for structured analysis
     if filepath.suffix in (".json", ".jsonl"):
@@ -150,13 +172,15 @@ def _analyze_json_structure(filepath: Path, content: str, findings: list[dict[st
 
     duplicates = {k: v for k, v in entry_hashes.items() if v > 5}
     if duplicates:
-        findings.append({
-            "severity": "medium",
-            "check": "duplicate_entries",
-            "detail": f"{len(duplicates)} entries appear more than 5 times in {filepath.name}",
-            "evidence": {"file": filepath.name, "duplicate_count": len(duplicates)},
-            "recommendation": "Review duplicate entries — may indicate replay-based poisoning",
-        })
+        findings.append(
+            {
+                "severity": "medium",
+                "check": "duplicate_entries",
+                "detail": f"{len(duplicates)} entries appear more than 5 times in {filepath.name}",
+                "evidence": {"file": filepath.name, "duplicate_count": len(duplicates)},
+                "recommendation": "Review duplicate entries — may indicate replay-based poisoning",
+            }
+        )
 
     # Check for role imbalance (assistant-heavy datasets can indicate poisoning)
     role_counts: dict[str, int] = {"system": 0, "user": 0, "assistant": 0}
@@ -170,10 +194,16 @@ def _analyze_json_structure(filepath: Path, content: str, findings: list[dict[st
     if total > 0:
         assistant_ratio = role_counts["assistant"] / total
         if assistant_ratio > 0.9:
-            findings.append({
-                "severity": "medium",
-                "check": "role_imbalance",
-                "detail": f"Dataset is {assistant_ratio:.1%} assistant messages in {filepath.name} — unusual distribution",
-                "evidence": {"file": filepath.name, "role_counts": role_counts, "assistant_ratio": round(assistant_ratio, 3)},
-                "recommendation": "Verify dataset contains balanced conversation turns",
-            })
+            findings.append(
+                {
+                    "severity": "medium",
+                    "check": "role_imbalance",
+                    "detail": f"Dataset is {assistant_ratio:.1%} assistant messages in {filepath.name} — unusual distribution",
+                    "evidence": {
+                        "file": filepath.name,
+                        "role_counts": role_counts,
+                        "assistant_ratio": round(assistant_ratio, 3),
+                    },
+                    "recommendation": "Verify dataset contains balanced conversation turns",
+                }
+            )

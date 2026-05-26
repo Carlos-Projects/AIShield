@@ -7,7 +7,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from jinja2 import Template
+from jinja2 import Environment, select_autoescape
 
 from aishield import __version__
 from aishield.scanner import ScanResult, Severity
@@ -130,7 +130,8 @@ def render_html_report(result: ScanResult) -> str:
     }
     sorted_findings = sorted(result.findings, key=lambda f: severity_order.get(f.severity, 99))
 
-    template = Template(HTML_TEMPLATE)
+    env = Environment(autoescape=select_autoescape())
+    template = env.from_string(HTML_TEMPLATE)
     return template.render(
         result=result,
         sorted_findings=sorted_findings,
