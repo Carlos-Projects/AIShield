@@ -41,14 +41,14 @@ class TestRedactPaths:
             severity=Severity.INFO,
             category=FindingCategory.SUPPLY_CHAIN,
             check="test",
-            detail="Found in /Users/carlosrocha/models/test",
-            evidence={"file": "/Users/carlosrocha/models/test/config.json"},
+            detail="Found in /home/user/models/test",
+            evidence={"file": "/home/user/models/test/config.json"},
         )
         redacted = redact_paths_in_finding(finding)
         assert "<redacted>" in redacted.detail
-        assert "/Users/carlosrocha" not in redacted.detail
+        assert "/home/user" not in redacted.detail
         assert "<redacted>" in str(redacted.evidence)
-        assert "carlosrocha" not in str(redacted.evidence)
+        assert "/home/user" not in str(redacted.evidence)
 
     def test_redact_tmp_directory(self):
         finding = Finding(

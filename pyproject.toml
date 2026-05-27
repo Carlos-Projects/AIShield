@@ -9,7 +9,7 @@ description = "Security scanner for the LLM fine-tuning lifecycle — detect dat
 readme = "README.md"
 requires-python = ">=3.11"
 license = {text = "MIT"}
-authors = [{name = "Carlos Rocha", email = "carlosrocha@users.noreply.github.com"}]
+authors = [{name = "Carlos-Projects", email = "Carlos@AIAgentObservatory.org"}]
 keywords = [
     "llm-security", "ai-safety", "fine-tuning",
     "dataset-poisoning", "lora-security", "model-integrity",

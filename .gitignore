@@ -57,6 +57,7 @@ datasets/
 reports/
 *.html
 !README.md
+!docs/assets/*.html
 
 # Logs
 *.log
