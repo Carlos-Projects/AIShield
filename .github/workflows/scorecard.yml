@@ -18,18 +18,18 @@ jobs:
       id-token: write
 
     steps:
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+      - uses: actions/checkout@v4
         with:
           persist-credentials: false
 
       - name: Run analysis
-        uses: ossf/scorecard-action@f49aabe0b5af0936c098158f9cb0c47c67b47ba3 # v2.4.1
+        uses: ossf/scorecard-action@v2.4.1
         with:
           results_file: results.sarif
           results_format: sarif
           publish_results: true
 
       - name: Upload SARIF to GitHub
-        uses: github/codeql-action/upload-sarif@9e8d0789d4a0fa9ceb6b1738f7e269594bdd67f0 # v3.28.9
+        uses: github/codeql-action/upload-sarif@v3.28.9
         with:
           sarif_file: results.sarif
