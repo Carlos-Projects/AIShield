@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AIShield Security Report</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; margin: 0; padding: 20px; background: #f5f5f5; color: #333; }
+        .container { max-width: 900px; margin: 0 auto; background: white; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); padding: 30px; }
+        h1 { color: #1a1a2e; border-bottom: 2px solid #16213e; padding-bottom: 10px; }
+        h2 { color: #16213e; margin-top: 30px; }
+        .header { display: flex; justify-content: space-between; align-items: center; }
+        .risk-score { font-size: 48px; font-weight: bold; padding: 20px; border-radius: 8px; text-align: center; min-width: 120px; }
+        .risk-low { background: #d4edda; color: #155724; }
+        .risk-medium { background: #fff3cd; color: #856404; }
+        .risk-high { background: #f8d7da; color: #721c24; }
+        .summary { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin: 20px 0; }
+        .summary-item { padding: 15px; border-radius: 6px; text-align: center; }
+        .summary-item.critical { background: #f8d7da; }
+        .summary-item.high { background: #fff3cd; }
+        .summary-item.medium { background: #e2e3f1; }
+        .summary-item.low { background: #d1ecf1; }
+        .summary-item.info { background: #e8e8e8; }
+        .summary-item .count { font-size: 24px; font-weight: bold; }
+        .summary-item .label { font-size: 12px; text-transform: uppercase; }
+        .finding { border-left: 4px solid #ccc; padding: 15px; margin: 10px 0; background: #fafafa; border-radius: 0 4px 4px 0; }
+        .finding.critical { border-color: #dc3545; }
+        .finding.high { border-color: #ffc107; }
+        .finding.medium { border-color: #6f42c1; }
+        .finding.low { border-color: #17a2b8; }
+        .finding.info { border-color: #6c757d; }
+        .finding-header { display: flex; justify-content: space-between; align-items: center; }
+        .severity-badge { padding: 2px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; text-transform: uppercase; }
+        .severity-badge.critical { background: #dc3545; color: white; }
+        .severity-badge.high { background: #ffc107; color: #333; }
+        .severity-badge.medium { background: #6f42c1; color: white; }
+        .severity-badge.low { background: #17a2b8; color: white; }
+        .severity-badge.info { background: #6c757d; color: white; }
+        .recommendation { color: #666; font-style: italic; margin-top: 8px; }
+        .meta { color: #666; font-size: 14px; }
+        .footer { margin-top: 30px; padding-top: 15px; border-top: 1px solid #eee; color: #999; font-size: 12px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>AIShield Security Report</h1>
+            <div class="risk-score risk-medium">51</div>
+        </div>
+
+        <div class="meta">
+            <p><strong>Target:</strong> /models/my-fine-tuned-llama/</p>
+            <p><strong>Scan ID:</strong> 9a80561164955289</p>
+            <p><strong>Timestamp:</strong> 2026-05-27T00:44:56.800886+00:00</p>
+        </div>
+
+        <h2>Summary</h2>
+        <div class="summary">
+            <div class="summary-item critical"><div class="count">1</div><div class="label">Critical</div></div>
+            <div class="summary-item high"><div class="count">1</div><div class="label">High</div></div>
+            <div class="summary-item medium"><div class="count">1</div><div class="label">Medium</div></div>
+            <div class="summary-item low"><div class="count">1</div><div class="label">Low</div></div>
+            <div class="summary-item info"><div class="count">1</div><div class="label">Info</div></div>
+        </div>
+
+        
+        <h2>Findings (5)</h2>
+        
+        <div class="finding critical">
+            <div class="finding-header">
+                <strong>poisoning_trigger_pattern</strong>
+                <span class="severity-badge critical">critical</span>
+            </div>
+            <p>Trigger pattern found in training_data.json: [SYSTEM OVERRIDE]</p>
+            
+            <p class="recommendation">Recommendation: Remove entries with trigger patterns</p>
+            
+        </div>
+        
+        <div class="finding high">
+            <div class="finding-header">
+                <strong>suspicious_target_modules</strong>
+                <span class="severity-badge high">high</span>
+            </div>
+            <p>LoRA targets suspicious modules: lm_head, embed_tokens</p>
+            
+            <p class="recommendation">Recommendation: Verify adapter source</p>
+            
+        </div>
+        
+        <div class="finding medium">
+            <div class="finding-header">
+                <strong>missing_provenance</strong>
+                <span class="severity-badge medium">medium</span>
+            </div>
+            <p>No provenance metadata file found</p>
+            
+            <p class="recommendation">Recommendation: Create provenance.json</p>
+            
+        </div>
+        
+        <div class="finding low">
+            <div class="finding-header">
+                <strong>missing_model_card</strong>
+                <span class="severity-badge low">low</span>
+            </div>
+            <p>No model card found</p>
+            
+            <p class="recommendation">Recommendation: Add a model card</p>
+            
+        </div>
+        
+        <div class="finding info">
+            <div class="finding-header">
+                <strong>model_fingerprint</strong>
+                <span class="severity-badge info">info</span>
+            </div>
+            <p>Model fingerprint: a1b2c3d4... (12 files)</p>
+            
+        </div>
+        
+        
+
+        <div class="footer">
+            <p>Generated by AIShield v0.1.0 | https://github.com/Carlos-Projects/AIShield</p>
+        </div>
+    </div>
+</body>
+</html>

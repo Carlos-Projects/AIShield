@@ -1,0 +1,42 @@
+cli:
+  - src/aishield/cli.py
+
+scanner:
+  - src/aishield/scanner.py
+
+dataset:
+  - src/aishield/dataset/**/*
+
+lora:
+  - src/aishield/lora/**/*
+
+weights:
+  - src/aishield/weights/**/*
+
+pipeline:
+  - src/aishield/pipeline/**/*
+
+reporters:
+  - src/aishield/reporters/**/*
+
+utils:
+  - src/aishield/utils/**/*
+
+export:
+  - src/aishield/export/**/*
+  - src/aishield/taxonomy.py
+
+tests:
+  - tests/**/*
+
+documentation:
+  - docs/**/*
+  - mkdocs.yml
+  - README.md
+
+ci:
+  - .github/**/*
+
+docker:
+  - Dockerfile
+  - .dockerignore
