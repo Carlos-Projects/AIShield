@@ -33,6 +33,8 @@ jobs:
       - name: Extract metadata
         id: meta
         uses: docker/metadata-action@v6
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
 
       - name: Build and push
         uses: docker/build-push-action@v7
