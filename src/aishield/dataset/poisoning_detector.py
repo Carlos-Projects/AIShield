@@ -11,8 +11,7 @@ import re
 from pathlib import Path
 from typing import Any
 
-# Maximum file size to scan (100MB)
-MAX_FILE_SIZE = 100 * 1024 * 1024
+from aishield.utils.file_io import read_text_safe
 
 # Patterns that indicate potential poisoning triggers
 POISONING_TRIGGER_PATTERNS = [
@@ -45,7 +44,7 @@ LABEL_FLIP_PATTERNS = [
 ]
 
 
-def detect_poisoning(path: Path) -> list[dict[str, Any]]:
+def detect_poisoning(path: Path, max_file_size: int = 100 * 1024 * 1024) -> list[dict[str, Any]]:
     """Scan dataset files for poisoning indicators.
 
     Checks JSON/JSONL/CSV files for trigger patterns, suspicious
@@ -53,6 +52,7 @@ def detect_poisoning(path: Path) -> list[dict[str, Any]]:
 
     Args:
         path: Path to model or dataset directory.
+        max_file_size: Maximum file size in bytes to scan. Default 100MB.
 
     Returns:
         List of finding dicts with severity, check, detail, evidence.
@@ -66,34 +66,30 @@ def detect_poisoning(path: Path) -> list[dict[str, Any]]:
     for df in data_files:
         if not df.is_file():
             continue
-        _scan_file_for_poisoning(df, findings)
+        _scan_file_for_poisoning(df, findings, max_file_size)
 
     return findings
 
 
-def _scan_file_for_poisoning(filepath: Path, findings: list[dict[str, Any]]) -> None:
+def _scan_file_for_poisoning(
+    filepath: Path,
+    findings: list[dict[str, Any]],
+    max_file_size: int = 100 * 1024 * 1024,
+) -> None:
     """Scan a single data file for poisoning indicators."""
-    file_size = filepath.stat().st_size
+    content, warning = read_text_safe(filepath, max_size=max_file_size)
 
-    # Skip files larger than MAX_FILE_SIZE
-    if file_size > MAX_FILE_SIZE:
+    if warning:
         findings.append(
             {
                 "severity": "info",
                 "check": "file_too_large",
-                "detail": f"Skipping {filepath.name} ({file_size / 1e6:.1f}MB) — exceeds maximum scan size",
-                "evidence": {"file": filepath.name, "size_mb": round(file_size / 1e6, 1)},
-                "recommendation": "Scan large files separately or increase MAX_FILE_SIZE",
+                "detail": warning,
+                "evidence": {"file": filepath.name},
+                "recommendation": "Scan large files separately or increase max-file-size",
             }
         )
         return
-
-    try:
-        content = filepath.read_text(encoding="utf-8", errors="replace")
-    except OSError:
-        return
-
-    file_size = filepath.stat().st_size
 
     # Check for trigger patterns
     for pattern in POISONING_TRIGGER_PATTERNS:

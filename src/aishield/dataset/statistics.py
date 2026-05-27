@@ -12,7 +12,7 @@ from pathlib import Path
 from typing import Any
 
 
-def analyze_dataset_stats(path: Path) -> list[dict[str, Any]]:
+def analyze_dataset_stats(path: Path, outlier_threshold: float = 3.0) -> list[dict[str, Any]]:
     """Analyze dataset statistics for anomaly detection.
 
     Computes token length distributions, vocabulary entropy,
@@ -20,6 +20,7 @@ def analyze_dataset_stats(path: Path) -> list[dict[str, Any]]:
 
     Args:
         path: Path to model or dataset directory.
+        outlier_threshold: Z-score threshold for outlier detection (default 3.0).
 
     Returns:
         List of finding dicts.
@@ -29,15 +30,21 @@ def analyze_dataset_stats(path: Path) -> list[dict[str, Any]]:
     data_files = list(path.glob("*.json")) + list(path.glob("*.jsonl"))
     for df in data_files:
         if df.is_file():
-            _analyze_file_stats(df, findings)
+            _analyze_file_stats(df, findings, outlier_threshold)
 
     return findings
 
 
-def _analyze_file_stats(filepath: Path, findings: list[dict[str, Any]]) -> None:
+def _analyze_file_stats(
+    filepath: Path,
+    findings: list[dict[str, Any]],
+    outlier_threshold: float = 3.0,
+) -> None:
     """Analyze statistical properties of a dataset file."""
     try:
-        content = filepath.read_text(encoding="utf-8", errors="replace")
+        from aishield.utils.file_io import read_text_safe  # noqa: PLC0415
+
+        content, _ = read_text_safe(filepath)
         if filepath.suffix == ".jsonl":
             entries = [json.loads(line) for line in content.strip().split("\n") if line.strip()]
         else:
@@ -64,9 +71,11 @@ def _analyze_file_stats(filepath: Path, findings: list[dict[str, Any]]) -> None:
     variance = sum((length - mean_len) ** 2 for length in lengths) / len(lengths)
     std_dev = math.sqrt(variance) if variance > 0 else 0
 
-    # Detect outliers (entries > 3 standard deviations from mean)
+    # Detect outliers (entries > outlier_threshold standard deviations from mean)
     if std_dev > 0:
-        outliers_count = sum(1 for length in lengths if abs(length - mean_len) > 3 * std_dev)
+        outliers_count = sum(
+            1 for length in lengths if abs(length - mean_len) > outlier_threshold * std_dev
+        )
         outlier_ratio = outliers_count / len(lengths)
 
         if outlier_ratio > 0.05:

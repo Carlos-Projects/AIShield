@@ -6,6 +6,7 @@ into a unified finding model.
 
 from __future__ import annotations
 
+import concurrent.futures
 import re
 from datetime import datetime, timezone
 from enum import Enum
@@ -156,10 +157,18 @@ class ScanResult(BaseModel):
         return min(score, 100)
 
 
+DEFAULT_MAX_FILE_SIZE = 100 * 1024 * 1024
+DEFAULT_TIMEOUT = 300
+DEFAULT_OUTLIER_THRESHOLD = 3.0
+
+
 def scan_directory(
     path: Path,
     scan_types: list[str] | None = None,
     redact_paths: bool = False,
+    max_file_size: int = DEFAULT_MAX_FILE_SIZE,
+    timeout: int = DEFAULT_TIMEOUT,
+    outlier_threshold: float = DEFAULT_OUTLIER_THRESHOLD,
 ) -> ScanResult:
     """Scan a model directory for fine-tuning security issues.
 
@@ -167,6 +176,9 @@ def scan_directory(
         path: Path to model or project directory.
         scan_types: List of scan types to run. None = all.
         redact_paths: If True, redact home directories from paths in output.
+        max_file_size: Maximum file size in bytes to scan (default 100MB).
+        timeout: Maximum scan duration in seconds (default 300).
+        outlier_threshold: Z-score threshold for statistical outlier detection (default 3.0).
 
     Returns:
         ScanResult with all findings.
@@ -180,7 +192,13 @@ def scan_directory(
     result = ScanResult(
         target=target,
         scan_type="full",
-        metadata={"scan_types": scan_types, "python_version": "3.11+"},
+        metadata={
+            "scan_types": scan_types,
+            "python_version": "3.11+",
+            "max_file_size": max_file_size,
+            "timeout": timeout,
+            "outlier_threshold": outlier_threshold,
+        },
     )
 
     if not resolved.exists():
@@ -195,14 +213,33 @@ def scan_directory(
         result.summary = result._compute_summary()
         return result
 
-    if "dataset" in scan_types:
-        result.findings.extend(_scan_dataset(resolved))
-    if "lora" in scan_types:
-        result.findings.extend(_scan_lora(resolved))
-    if "weights" in scan_types:
-        result.findings.extend(_scan_weights(resolved))
-    if "pipeline" in scan_types:
-        result.findings.extend(_scan_pipeline(resolved))
+    def _run() -> None:
+        if "dataset" in scan_types:
+            result.findings.extend(_scan_dataset(resolved, max_file_size, outlier_threshold))
+        if "lora" in scan_types:
+            result.findings.extend(_scan_lora(resolved))
+        if "weights" in scan_types:
+            result.findings.extend(_scan_weights(resolved))
+        if "pipeline" in scan_types:
+            result.findings.extend(_scan_pipeline(resolved))
+
+    if timeout > 0:
+        with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
+            future = executor.submit(_run)
+            try:
+                future.result(timeout=timeout)
+            except concurrent.futures.TimeoutError:
+                result.findings.append(
+                    Finding(
+                        severity=Severity.MEDIUM,
+                        category=FindingCategory.CONFIGURATION_RISK,
+                        check="scan_timeout",
+                        detail=f"Scan exceeded {timeout}s timeout — results may be incomplete",
+                        recommendation="Increase timeout or scan fewer file types simultaneously",
+                    )
+                )
+    else:
+        _run()
 
     # Apply MITRE ATLAS mappings and optional path redaction
     for finding in result.findings:
@@ -219,11 +256,15 @@ def scan_directory(
     return result
 
 
-def _scan_dataset(path: Path) -> list[Finding]:
+def _scan_dataset(
+    path: Path,
+    max_file_size: int = DEFAULT_MAX_FILE_SIZE,
+    outlier_threshold: float = DEFAULT_OUTLIER_THRESHOLD,
+) -> list[Finding]:
     """Run dataset poisoning checks."""
     findings: list[Finding] = []
 
-    for pf in detect_poisoning(path):
+    for pf in detect_poisoning(path, max_file_size=max_file_size):
         findings.append(
             Finding(
                 severity=Severity(pf["severity"]),
@@ -251,7 +292,7 @@ def _scan_dataset(path: Path) -> list[Finding]:
             )
         )
 
-    for ds in analyze_dataset_stats(path):
+    for ds in analyze_dataset_stats(path, outlier_threshold=outlier_threshold):
         findings.append(
             Finding(
                 severity=Severity(ds["severity"]),

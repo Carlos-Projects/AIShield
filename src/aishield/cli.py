@@ -22,7 +22,13 @@ from aishield.lora.diff import generate_lora_diff_report
 from aishield.pipeline.compliance import check_compliance
 from aishield.pipeline.supply_chain import generate_supply_chain_report
 from aishield.reporters.html import save_html_report
-from aishield.scanner import generate_report, scan_directory
+from aishield.scanner import (
+    DEFAULT_MAX_FILE_SIZE,
+    DEFAULT_OUTLIER_THRESHOLD,
+    DEFAULT_TIMEOUT,
+    generate_report,
+    scan_directory,
+)
 from aishield.weights.fingerprinter import generate_fingerprint
 from aishield.weights.manifest import generate_manifest, save_manifest, verify_manifest
 
@@ -55,6 +61,27 @@ def scan(
     redact_paths: bool = typer.Option(
         False, "--redact-paths", "-r", help="Redact home directories from output paths"
     ),
+    max_file_size: int = typer.Option(
+        DEFAULT_MAX_FILE_SIZE,
+        "--max-file-size",
+        "-M",
+        help="Maximum file size in bytes to scan (default 104857600 = 100MB)",
+        show_default=False,
+    ),
+    timeout: int = typer.Option(
+        DEFAULT_TIMEOUT,
+        "--timeout",
+        "-T",
+        help="Maximum scan duration in seconds (default 300, 0 = no timeout)",
+        show_default=False,
+    ),
+    outlier_threshold: float = typer.Option(
+        DEFAULT_OUTLIER_THRESHOLD,
+        "--outlier-threshold",
+        "-O",
+        help="Z-score threshold for statistical outlier detection (default 3.0)",
+        show_default=False,
+    ),
 ):
     """Perform a full security scan of a model directory."""
     path = _resolve_path(path)
@@ -64,8 +91,17 @@ def scan(
     if types is not None:
         invalid = [t for t in types if t not in valid_scan_types]
         if invalid:
-            raise typer.BadParameter(f"Invalid scan types: {', '.join(invalid)}. Valid: {', '.join(sorted(valid_scan_types))}")
-    result = scan_directory(path, scan_types=types, redact_paths=redact_paths)
+            raise typer.BadParameter(
+                f"Invalid scan types: {', '.join(invalid)}. Valid: {', '.join(sorted(valid_scan_types))}"
+            )
+    result = scan_directory(
+        path,
+        scan_types=types,
+        redact_paths=redact_paths,
+        max_file_size=max_file_size,
+        timeout=timeout,
+        outlier_threshold=outlier_threshold,
+    )
 
     if json_output:
         output_text = result.model_dump_json(indent=2)
@@ -96,10 +132,29 @@ def scan(
 def dataset(
     path: Path = typer.Argument(..., help="Path to dataset or model directory"),
     json_output: bool = typer.Option(False, "--json", "-j", help="Output as JSON"),
+    max_file_size: int = typer.Option(
+        DEFAULT_MAX_FILE_SIZE,
+        "--max-file-size",
+        "-M",
+        help="Maximum file size in bytes to scan",
+        show_default=False,
+    ),
+    outlier_threshold: float = typer.Option(
+        DEFAULT_OUTLIER_THRESHOLD,
+        "--outlier-threshold",
+        "-O",
+        help="Z-score threshold for statistical outlier detection",
+        show_default=False,
+    ),
 ):
     """Analyze dataset for poisoning and provenance issues."""
     path = _resolve_path(path)
-    result = scan_directory(path, scan_types=["dataset"])
+    result = scan_directory(
+        path,
+        scan_types=["dataset"],
+        max_file_size=max_file_size,
+        outlier_threshold=outlier_threshold,
+    )
 
     if json_output:
         console.print(result.model_dump_json(indent=2))
