@@ -148,12 +148,12 @@ aishield dataset ./data/ --outlier-threshold 2.0
 # Disable timeout entirely
 aishield scan ./model/ --timeout 0
 
-# Combine flags
+# Combine flags (256MB, 15min timeout, tighter anomaly detection)
 aishield scan ./large-model/ \
-  --max-file-size 268435456 \  # 256MB
-  --timeout 900 \              # 15 minutes
-  --outlier-threshold 2.5 \    # tighter anomaly detection
-  --redact-paths               # protect privacy
+  --max-file-size 268435456 \
+  --timeout 900 \
+  --outlier-threshold 2.5 \
+  --redact-paths
 ```
 
 ### Supply Chain Assessment
