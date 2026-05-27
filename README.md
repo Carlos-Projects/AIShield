@@ -6,7 +6,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![CI](https://github.com/Carlos-Projects/AIShield/actions/workflows/ci.yml/badge.svg)](https://github.com/Carlos-Projects/AIShield/actions/workflows/ci.yml)
 [![Tests](https://img.shields.io/badge/tests-212%20passed-brightgreen.svg)](https://github.com/Carlos-Projects/AIShield)
-[![Coverage](https://img.shields.io/badge/coverage-89%25-green.svg)](https://github.com/Carlos-Projects/AIShield)
+[![codecov](https://codecov.io/gh/Carlos-Projects/AIShield/branch/main/graph/badge.svg)](https://codecov.io/gh/Carlos-Projects/AIShield)
 [![Code style: ruff](https://img.shields.io/badge/code%20style-ruff-261230.svg)](https://docs.astral.sh/ruff/)
 [![Type checked: mypy](https://img.shields.io/badge/types-mypy-blue.svg)](https://mypy-lang.org/)
 [![GitHub release](https://img.shields.io/github/v/release/Carlos-Projects/AIShield)](https://github.com/Carlos-Projects/AIShield/releases)
@@ -169,6 +169,21 @@ aishield manifest ./model/
 aishield manifest ./model/ --verify
 ```
 
+### Examples
+
+Try AIShield with the included sample files:
+
+```bash
+cd examples/
+
+# Scan sample dataset
+aishield dataset . --json
+
+# Full scan with HTML report
+aishield scan . --html report.html
+open report.html
+```
+
 ### Compliance Reporting
 
 ```bash
@@ -253,6 +268,21 @@ AIShield's detection methodology is grounded in peer-reviewed research and indus
 
 ## Development
 
+### Quick start
+
+```bash
+make dev       # install dev dependencies
+make test      # run 212 tests
+make lint      # ruff check (0 errors)
+make typecheck # mypy check (0 errors)
+make coverage  # test + coverage report
+make check     # lint + typecheck + test (all-in-one)
+make build     # build Python package
+make docker    # build Docker image
+```
+
+### Manual commands
+
 ```bash
 # Install dev dependencies
 pip install -e ".[dev]"
@@ -281,5 +311,6 @@ MIT — See [LICENSE](LICENSE) for details.
   <a href="https://github.com/Carlos-Projects/AIShield/issues">Request Feature</a> ·
   <a href="https://github.com/Carlos-Projects/AIShield/blob/main/CONTRIBUTING.md">Contributing</a> ·
   <a href="https://github.com/Carlos-Projects/AIShield/blob/main/SECURITY.md">Security</a> ·
+  <a href="https://github.com/Carlos-Projects/AIShield/blob/main/CODE_OF_CONDUCT.md">Code of Conduct</a> ·
   <a href="https://github.com/Carlos-Projects/AIShield/blob/main/CHANGELOG.md">Changelog</a>
 </p>
