@@ -1,6 +1,27 @@
 # Contributing to AIShield
 
-Thank you for contributing to AIShield!
+👋 **Welcome to AIShield!**
+
+Thank you for contributing to security scanning for the LLM fine-tuning lifecycle. Every detector, test, or documentation improvement you contribute strengthens the safety of the AI supply chain. We're thrilled to have you onboard!
+
+## First Time Contributor?
+
+New to AI security scanning? Great place to start:
+
+- Look for `good first issue` or `help wanted` labels
+- Add a new detector — follow the patterns in the existing detectors
+- Improve test coverage or add edge cases
+- Write documentation or improve existing docs
+
+We believe everyone has something valuable to contribute. Don't hesitate to jump in!
+
+## Need Help?
+
+Questions or stuck on something?
+
+- Open a [GitHub Issue](https://github.com/Carlos-Projects/AIShield/issues)
+- Check existing issues for answers
+- Share your environment: Python version, OS, and what you tried
 
 ## Development Setup
 
@@ -55,3 +76,7 @@ Follow conventional commits:
 - `test:` test additions/changes
 - `refactor:` code refactoring
 - `chore:` maintenance tasks
+
+---
+
+💡 This project is governed by a [Code of Conduct](CODE_OF_CONDUCT.md). By participating, you agree to uphold its principles.
