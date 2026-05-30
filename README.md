@@ -13,6 +13,7 @@
 [![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/Carlos-Projects/AIShield/badge)](https://securityscorecards.dev/viewer/?uri=github.com/Carlos-Projects/AIShield)
 [![Star History](https://img.shields.io/stars/Carlos-Projects/AIShield?style=social)](https://github.com/Carlos-Projects/AIShield/stargazers)
 [![Docker](https://img.shields.io/badge/docker-ghcr.io-blue?logo=docker)](https://github.com/Carlos-Projects/AIShield/pkgs/container/aishield)
+[![Star History](https://img.shields.io/badge/Star-History-blue?style=social)](https://api.star-history.com/svg?repos=Carlos-Projects/AIShield&type=Date)
 
 Detect **backdoors in datasets**, **malicious LoRA adapters**, **data poisoning**, and **model weight tampering** across the entire fine-tuning pipeline — from base model selection through deployment.
 
