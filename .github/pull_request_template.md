@@ -1,29 +1,36 @@
 ## Description
 
-<!-- Provide a brief summary of the changes. -->
+<!-- Describe your changes and the motivation behind them -->
 
-## Type of change
+Fixes #(issue)
 
-- [ ] Bug fix (non-breaking change that fixes an issue)
-- [ ] New feature (non-breaking change that adds functionality)
-- [ ] Breaking change (fix or feature that changes existing behavior)
+## Type of Change
+
+- [ ] Bug fix
+- [ ] New feature
+- [ ] New detector
 - [ ] Documentation update
-- [ ] CI/CD or infrastructure change
-- [ ] Security fix
+- [ ] Refactoring
+- [ ] Test improvement
 
-## How has this been tested?
+## How Has This Been Tested?
 
-- [ ] `ruff check src/ tests/` — 0 errors
-- [ ] `mypy src/aishield/` — 0 errors
-- [ ] `python -m pytest tests/ -v` — all tests pass
+- [ ] `ruff check .` passes
+- [ ] `ruff format --check .` passes
+- [ ] `mypy src/` passes
+- [ ] `python -m pytest tests/ -v` passes
 
 ## Checklist
 
-- [ ] My code follows the project's coding style
+- [ ] My code follows the project's code style
+- [ ] Type hints and docstrings added
 - [ ] I have added tests that prove my fix/feature works
-- [ ] I have updated the documentation / README if needed
-- [ ] My changes generate no new warnings or errors
+- [ ] All existing and new tests pass
 
-## Related issues
+## Additional Context
 
-Closes #
+<!-- Any extra information that might be helpful -->
+
+---
+
+💡 Thanks for contributing to AIShield! You're helping secure the LLM supply chain.
