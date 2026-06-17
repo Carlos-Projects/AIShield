@@ -1,42 +1,58 @@
 cli:
-  - src/aishield/cli.py
+  - changed-files:
+      - any-glob-to-any-file: src/aishield/cli.py
 
 scanner:
-  - src/aishield/scanner.py
+  - changed-files:
+      - any-glob-to-any-file: src/aishield/scanner.py
 
 dataset:
-  - src/aishield/dataset/**/*
+  - changed-files:
+      - any-glob-to-any-file: src/aishield/dataset/**/*
 
 lora:
-  - src/aishield/lora/**/*
+  - changed-files:
+      - any-glob-to-any-file: src/aishield/lora/**/*
 
 weights:
-  - src/aishield/weights/**/*
+  - changed-files:
+      - any-glob-to-any-file: src/aishield/weights/**/*
 
 pipeline:
-  - src/aishield/pipeline/**/*
+  - changed-files:
+      - any-glob-to-any-file: src/aishield/pipeline/**/*
 
 reporters:
-  - src/aishield/reporters/**/*
+  - changed-files:
+      - any-glob-to-any-file: src/aishield/reporters/**/*
 
 utils:
-  - src/aishield/utils/**/*
+  - changed-files:
+      - any-glob-to-any-file: src/aishield/utils/**/*
 
 export:
-  - src/aishield/export/**/*
-  - src/aishield/taxonomy.py
+  - changed-files:
+      - any-glob-to-any-file:
+          - src/aishield/export/**/*
+          - src/aishield/taxonomy.py
 
 tests:
-  - tests/**/*
+  - changed-files:
+      - any-glob-to-any-file: tests/**/*
 
 documentation:
-  - docs/**/*
-  - mkdocs.yml
-  - README.md
+  - changed-files:
+      - any-glob-to-any-file:
+          - docs/**/*
+          - mkdocs.yml
+          - README.md
 
 ci:
-  - .github/**/*
+  - changed-files:
+      - any-glob-to-any-file: .github/**/*
 
 docker:
-  - Dockerfile
-  - .dockerignore
+  - changed-files:
+      - any-glob-to-any-file:
+          - Dockerfile
+          - .dockerignore
